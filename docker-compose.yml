@@ -1,0 +1,58 @@
+version: '3.5'
+
+networks:
+    default:  
+        name: test-network
+
+volumes:
+  docker-data:
+
+services: 
+  test-app:
+    image: fucyber/laravel7-nginx:1.2 
+    container_name: test-app
+    ports:
+        - 9898:80
+    restart: always
+    volumes:
+        - ./application/:/var/www
+        - ./logs/nginx:/var/log/nginx
+        - ./dockers/php-fpm/config/php.ini:/etc/php7/php.ini
+        - ./dockers/nginx/nginx.conf:/etc/nginx/nginx.conf
+    networks:
+        - default
+
+  test-db:
+    image: mariadb:10.3
+    container_name: test-db 
+    ports:
+        - "9897:3306"
+    restart: always 
+    environment:
+      TZ: "Asia/Bangkok"
+      MYSQL_ROOT_PASSWORD: "root"
+      MYSQL_ROOT_HOST: "%"
+    volumes:
+      - ./docker-data/mysql:/var/lib/mysql 
+    networks:
+      - default
+
+
+  phpmhyadmin:
+    restart: always
+    image: 'phpmyadmin/phpmyadmin:edge-4.8'
+    container_name: test-phpmhyadmin
+    ports:
+      - '9896:80'
+    volumes:
+      - './docker-data/mysql:/var/lib/mysql'
+    networks:
+      - default
+    depends_on: 
+      - test-db
+    environment:
+      PMA_ARBITRARY: 1
+      PMA_HOST: test-db
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root
